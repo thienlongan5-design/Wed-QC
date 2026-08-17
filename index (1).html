@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Kiếm Tiền Pro - Adsterra Popunder</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --border-color: #334155;
+            --primary: #3b82f6;
+        }
+        .light-mode {
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-color: #0f172a;
+            --border-color: #cbd5e1;
+            --primary: #2563eb;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding-bottom: 70px; transition: 0.3s; }
+        .container { padding: 15px; max-width: 500px; margin: 0 auto; }
+        .hidden { display: none !important; }
+        h2, h3 { color: #38bdf8; text-align: center; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 5px; transition: 0.3s; }
+        button:hover { opacity: 0.9; }
+        button:disabled { background: #475569; cursor: not-allowed; }
+        .btn-danger { background: #ef4444; } 
+        .btn-warning { background: #f59e0b; color: #000; } 
+        .btn-success { background: #10b981; } 
+        
+        .card { background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border: 1px solid var(--border-color); }
+        .admin-name { color: #ef4444 !important; text-shadow: 0 0 8px rgba(239, 68, 68, 0.6); font-weight: bold; text-transform: uppercase; }
+        
+        /* THANH ĐIỀU HƯỚNG BOTTOM NAV */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card-bg); display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid var(--border-color); z-index: 100; }
+        .nav-item { color: #94a3b8; text-align: center; cursor: pointer; font-size: 11px; flex: 1; }
+        .nav-item.active { color: #38bdf8; font-weight: bold; }
+        
+        .msg-box, .history-item { background: var(--bg-color); padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #38bdf8; font-size: 13px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        
+        /* MODAL */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--card-bg); padding: 20px; border-radius: 12px; width: 80%; max-width: 350px; text-align: center; border: 1px solid var(--border-color); }
+        
+        #maintenanceScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; text-align: center; padding: 20px;}
+        #hiddenAdContainer { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- MÀN HÌNH BẢO TRÌ -->
+    <div id="maintenanceScreen" class="hidden">
+        <h1 style="color:#ef4444;">🚧 HỆ THỐNG ĐANG BẢO TRÌ</h1>
+        <p>Admin đang nâng cấp hệ thống. Vui lòng quay lại sau!</p>
+    </div>
+
+    <!-- ĐĂNG NHẬP -->
+    <div id="loginScreen" class="container">
+        <h2>Đăng Nhập Hệ Thống</h2>
+        <div class="card">
+            <input type="email" id="email" placeholder="Email của bạn...">
+            <input type="password" id="pass" placeholder="Mật khẩu...">
+            <button id="btnLogin">Đăng Nhập</button>
+            <p id="loginError" style="color: #ef4444; font-size: 13px; text-align: center;"></p>
+        </div>
+    </div>
+
+    <!-- ỨNG DỤNG CHÍNH -->
+    <div id="mainApp" class="hidden">
+        <div class="container">
+            <div class="top-bar">
+                <span style="font-size: 14px;">Xin chào, <b id="uiName">...</b></span>
+                <button onclick="toggleTheme()" style="width: auto; padding: 6px 12px; font-size: 12px;" class="btn-warning">🌓 Giao Diện</button>
+            </div>
+        </div>
+        
+        <!-- TRANG CHỦ -->
+        <div id="tabHome" class="container tab-content">
+            <div class="card">
+                <p>Vai trò: <span id="uiRole">...</span></p>
+                <p>Số dư ví: <strong style="color:#10b981; font-size:20px;" id="uiBalance">0</strong> VNĐ</p>
+                <div style="background: var(--bg-color); padding: 8px; border-radius: 6px; font-size: 12px; margin-top: 10px;">
+                    Mã giới thiệu: <b id="uiRefCode" style="color:#38bdf8;">...</b>
+                    <button onclick="copyRef()" style="margin-top:5px; padding:4px; font-size:11px;">📋 Sao chép mã</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Xem Quảng Cáo Nhận Thưởng</h3>
+                <p style="font-size: 12px; color: #94a3b8;">Xem quảng cáo Popunder để tích lũy số dư (Nhận 60% giá trị thưởng).</p>
+                <button id="btnWatchAd" class="btn-warning">📺 Xem Quảng Cáo Popunder Ngay</button>
+                <div id="adStatus" style="margin-top:8px; color:#10b981; font-size:13px; text-align:center;"></div>
+                <div id="hiddenAdContainer"></div> 
+            </div>
+
+            <div class="card">
+                <h3>Liên Kết Ngân Hàng & Rút Tiền</h3>
+                <input type="text" id="bankName" placeholder="Tên Ngân Hàng (MB, VCB, Momo...)">
+                <input type="text" id="bankNumber" placeholder="Số tài khoản / Số điện thoại">
+                <input type="text" id="bankHolder" placeholder="Tên chủ thẻ (VIẾT HOA)">
+                <button onclick="saveBankInfo()" class="btn-success">💾 Lưu Thông Tin Ngân Hàng</button>
+                
+                <hr style="border-color:var(--border-color); margin:15px 0;">
+                <input type="number" id="withdrawAmount" placeholder="Số tiền rút (Tối thiểu 50.000đ)">
+                <button onclick="requestWithdraw()" class="btn-warning">💸 Gửi Yêu Cầu Rút Tiền</button>
+            </div>
+
+            <button id="btnLogout" class="btn-danger" style="margin-top:10px;">Đăng Xuất</button>
+        </div>
+
+        <!-- HỘP THƯ -->
+        <div id="tabInbox" class="container tab-content hidden">
+            <h2>Hộp Thư Thông Báo</h2>
+            <div id="inboxList">
+                <p style="color: #94a3b8; text-align:center;">Đang tải hộp thư...</p>
+            </div>
+        </div>
+
+        <!-- LỊCH SỬ GIAO DỊCH -->
+        <div id="tabHistory" class="container tab-content hidden">
+            <h2>Lịch Sử Giao Dịch</h2>
+            <div id="historyList">
+                <p style="color: #94a3b8; text-align:center;">Chưa có giao dịch nào.</p>
+            </div>
+        </div>
+
+        <!-- GÓP Ý -->
+        <div id="tabFeedback" class="container tab-content hidden">
+            <h2>Góp Ý Hệ Thống</h2>
+            <div class="card">
+                <textarea id="feedbackContent" rows="4" style="width:100%; background:var(--bg-color); color:var(--text-color); padding:10px; border-radius:8px; border:1px solid var(--border-color); box-sizing:border-box;" placeholder="Nhập ý kiến đóng góp..."></textarea>
+                <button onclick="sendFeedback()">Gửi Góp Ý</button>
+            </div>
+        </div>
+
+        <!-- BẢNG ĐIỀU KHIỂN ADMIN -->
+        <div id="tabAdmin" class="container tab-content hidden">
+            <h2 class="admin-name">Cơ Sở Chỉ Huy Admin</h2>
+            
+            <div class="card">
+                <h3>1. Gửi Thông Báo Toàn Cầu</h3>
+                <input type="text" id="adminGlobalTitle" placeholder="Tiêu đề...">
+                <input type="text" id="adminGlobalMsg" placeholder="Nội dung...">
+                <button onclick="adminExecute('globalMsg')">Gửi Đến Mọi Người</button>
+            </div>
+
+            <div class="card">
+                <h3>2 & 3. Quản Lý User (UID)</h3>
+                <input type="text" id="adminTargetUid" placeholder="Nhập UID người dùng...">
+                <input type="number" id="adminMoneyAmount" placeholder="Số tiền cộng/trừ (+ hoặc -)...">
+                <button onclick="adminExecute('addMoney')" class="btn-warning">Cập Nhật Số Dư User</button>
+            </div>
+
+            <div class="card">
+                <h3>4 & 5. Bảo Trì Hệ Thống</h3>
+                <button onclick="adminExecute('enableMaint')" class="btn-danger">🔒 Bật Bảo Trì</button>
+                <button onclick="adminExecute('disableMaint')" class="btn-success" style="margin-top:8px;">🔓 Tắt Bảo Trì</button>
+            </div>
+
+            <div class="card">
+                <h3>6 & 7. Thống Kê & Kiểm Tra</h3>
+                <button onclick="adminExecute('checkUser')" class="btn-warning">🔍 Kiểm Tra User</button>
+                <button onclick="adminExecute('showStats')" style="margin-top:8px;">📊 Thống Kê Tổng Quan (Doanh thu & Quỹ)</button>
+            </div>
+        </div>
+
+        <!-- THANH ĐIỀU HƯỚNG BOTTOM NAV -->
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="switchTab('tabHome', this)">🏠 Trang Chủ</div>
+            <div class="nav-item" onclick="switchTab('tabInbox', this)">✉️ Hộp Thư</div>
+            <div class="nav-item" onclick="switchTab('tabHistory', this)">📜 Lịch Sử</div>
+            <div class="nav-item" onclick="switchTab('tabFeedback', this)">💡 Góp Ý</div>
+            <div class="nav-item hidden admin-name" id="navAdmin" onclick="switchTab('tabAdmin', this)">⚙️ Admin</div>
+        </div>
+    </div>
+
+    <!-- MODAL XÁC NHẬN 3 GIÂY -->
+    <div id="confirmModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 style="color:#f59e0b;">XÁC NHẬN</h3>
+            <p id="confirmText" style="font-size:14px;">Bạn có chắc chắn muốn thực thi?</p>
+            <button id="btnConfirmAction" class="btn-danger" disabled>Xác nhận (3s)</button>
+            <button onclick="closeConfirmModal()" style="background:#475569; margin-top:5px;">Hủy bỏ</button>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+        import { getDatabase, ref, get, set, update, push, onValue } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyC-9H_vpLYNh2xfwXmyHf6bmNubyAr6vjQ", authDomain: "wed-26856.firebaseapp.com", databaseURL: "https://wed-26856-default-rtdb.firebaseio.com", projectId: "wed-26856", storageBucket: "wed-26856.firebasestorage.app", messagingSenderId: "1044067507339", appId: "1:1044067507339:web:6c21fd80d16b1ccad4488e" 
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        let currentUserData = null;
+        let actionCallback = null;
+
+        // ĐỔI GIAO DIỆN SÁNG/TỐI
+        window.toggleTheme = function() {
+            document.body.classList.toggle("light-mode");
+        }
+
+        // ĐĂNG NHẬP
+        document.getElementById("btnLogin").addEventListener("click", async () => {
+            const email = document.getElementById("email").value;
+            const pass = document.getElementById("pass").value;
+            document.getElementById("btnLogin").innerText = "Đang vào...";
+            try { await signInWithEmailAndPassword(auth, email, pass); } 
+            catch (e) { document.getElementById("loginError").innerText = "Sai tài khoản hoặc mật khẩu!"; document.getElementById("btnLogin").innerText = "Đăng Nhập"; }
+        });
+        document.getElementById("btnLogout").addEventListener("click", () => signOut(auth));
+
+        // BẢO TRÌ REALTIME
+        onValue(ref(db, 'systemConfig/maintenance'), (snap) => {
+            if (snap.val() === true) {
+                document.getElementById("maintenanceScreen").classList.remove("hidden");
+            } else {
+                document.getElementById("maintenanceScreen").classList.add("hidden");
+            }
+        });
+
+        // AUTH STATE
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById("loginScreen").classList.add("hidden");
+                document.getElementById("mainApp").classList.remove("hidden");
+                
+                const snap = await get(ref(db, 'users/' + user.uid));
+                if(snap.exists()){
+                    currentUserData = snap.val();
+                    document.getElementById("uiName").innerText = currentUserData.username;
+                    document.getElementById("uiBalance").innerText = (currentUserData.balance || 0).toLocaleString();
+                    document.getElementById("uiRole").innerText = currentUserData.role;
+                    
+                    let refCode = currentUserData.refCode || "REF" + user.uid.substring(0, 5).toUpperCase();
+                    document.getElementById("uiRefCode").innerText = refCode;
+
+                    if(currentUserData.bankInfo) {
+                        document.getElementById("bankName").value = currentUserData.bankInfo.bankName || "";
+                        document.getElementById("bankNumber").value = currentUserData.bankInfo.accountNumber || "";
+                        document.getElementById("bankHolder").value = currentUserData.bankInfo.accountHolder || "";
+                    }
+
+                    if (currentUserData.role === "Admin") {
+                        document.getElementById("uiName").className = "admin-name";
+                        document.getElementById("navAdmin").classList.remove("hidden");
+                    }
+
+                    loadInbox(user.uid);
+                    loadHistory(user.uid);
+                }
+            } else {
+                document.getElementById("mainApp").classList.add("hidden");
+                document.getElementById("loginScreen").classList.remove("hidden");
+            }
+        });
+
+        // CHUYỂN TAB
+        window.switchTab = function(tabId, element) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(tabId).classList.remove('hidden');
+            element.classList.add('active');
+        }
+
+        // SAO CHÉP MÃ GIỚI THIỆU
+        window.copyRef = function() {
+            const code = document.getElementById("uiRefCode").innerText;
+            navigator.clipboard.writeText(code);
+            alert("Đã sao chép mã: " + code);
+        }
+
+        // LƯU NGÂN HÀNG
+        window.saveBankInfo = async function() {
+            if(!auth.currentUser) return;
+            const bankName = document.getElementById("bankName").value.trim();
+            const accountNumber = document.getElementById("bankNumber").value.trim();
+            const accountHolder = document.getElementById("bankHolder").value.trim().toUpperCase();
+
+            if(!bankName || !accountNumber || !accountHolder) return alert("Vui lòng điền đủ thông tin ngân hàng!");
+
+            try {
+                await update(ref(db, 'users/' + auth.currentUser.uid + '/bankInfo'), { bankName, accountNumber, accountHolder });
+                alert("Đã lưu thông tin ngân hàng thành công!");
+            } catch(e) { alert("Lỗi: " + e.message); }
+        }
+
+        // RÚT TIỀN
+        window.requestWithdraw = async function() {
+            const amount = parseInt(document.getElementById("withdrawAmount").value);
+            if(isNaN(amount) || amount < 50000) return alert("Số tiền rút tối thiểu là 50.000 VNĐ!");
+            if(amount > currentUserData.balance) return alert("Số dư không đủ!");
+            if(!currentUserData.bankInfo) return alert("Hãy lưu thông tin ngân hàng trước!");
+
+            openConfirmModal(`Xác nhận rút ${amount.toLocaleString()} VNĐ về ${currentUserData.bankInfo.bankName}?`, async () => {
+                try {
+                    let newBal = currentUserData.balance - amount;
+                    await update(ref(db, 'users/' + auth.currentUser.uid), { balance: newBal });
+                    
+                    push(ref(db, `users/${auth.currentUser.uid}/history`), {
+                        type: "Rút tiền", amount: amount, status: "Đang chờ duyệt", time: new Date().toLocaleString()
+                    });
+
+                    currentUserData.balance = newBal;
+                    document.getElementById("uiBalance").innerText = newBal.toLocaleString();
+                    document.getElementById("withdrawAmount").value = "";
+                    alert("Gửi yêu cầu rút tiền thành công!");
+                } catch(e) { alert("Lỗi: " + e.message); }
+            });
+        }
+
+        // XEM QUẢNG CÁO ADSTERRA (POPUNDER MỚI NHẤT) VÀ CHIA TỶ LỆ 60% - 30% - 10%
+        document.getElementById("btnWatchAd").addEventListener("click", () => {
+            const btn = document.getElementById("btnWatchAd");
+            const status = document.getElementById("adStatus");
+            btn.disabled = true;
+            status.innerText = "Đang kích hoạt quảng cáo Popunder...";
+            
+            // Chèn script Popunder mới của Adsterra
+            const container = document.getElementById("hiddenAdContainer");
+            container.innerHTML = "";
+            let script = document.createElement("script");
+            script.src = "https://pl30888097.effectivecpmnetwork.com/37/70/8e/37708edb18c23b1b75376ea199e63044.js";
+            container.appendChild(script);
+
+            let timeLeft = 6; // Đếm ngược 6 giây xác thực tương tác
+            const interval = setInterval(async () => {
+                timeLeft--;
+                status.innerText = `Đang xác thực quảng cáo... Còn ${timeLeft}s`;
+                if(timeLeft <= 0) {
+                    clearInterval(interval);
+                    container.innerHTML = "";
+                    
+                    // Giá trị thưởng tổng là 1.000đ
+                    const rewardTotal = 1000; 
+                    const userShare = rewardTotal * 0.6;  // 60% cho người dùng (600đ)
+                    const adminShare = rewardTotal * 0.3; // 30% cho Admin (300đ)
+                    const fundShare = rewardTotal * 0.1;  // 10% Quỹ tích lũy (100đ)
+
+                    // 1. Cộng 60% vào ví người dùng
+                    let newBal = currentUserData.balance + userShare;
+                    await update(ref(db, 'users/' + auth.currentUser.uid), { balance: newBal });
+                    
+                    // 2. Cộng 30% vào tổng thu nhập Admin trên Firebase
+                    const adminIncRef = ref(db, 'systemConfig/adminTotalIncome');
+                    const adminSnap = await get(adminIncRef);
+                    let currentAdminInc = adminSnap.exists() ? adminSnap.val() : 0;
+                    await set(adminIncRef, currentAdminInc + adminShare);
+
+                    // 3. Cộng 10% vào quỹ tích lũy trên Firebase
+                    const fundRef = ref(db, 'systemConfig/accumulatedFund');
+                    const fundSnap = await get(fundRef);
+                    let currentFund = fundSnap.exists() ? fundSnap.val() : 0;
+                    await set(fundRef, currentFund + fundShare);
+
+                    // Ghi lịch sử giao dịch
+                    push(ref(db, `users/${auth.currentUser.uid}/history`), {
+                        type: "Xem quảng cáo Popunder (60%)", amount: userShare, status: "Thành công", time: new Date().toLocaleString()
+                    });
+
+                    document.getElementById("uiBalance").innerText = newBal.toLocaleString();
+                    currentUserData.balance = newBal;
+                    
+                    status.innerText = `Thành công! Nhận +${userShare.toLocaleString()} VNĐ`;
+                    btn.disabled = false;
+                }
+            }, 1000);
+        });
+
+        // GÓP Ý
+        window.sendFeedback = function() {
+            const content = document.getElementById("feedbackContent").value;
+            if(!content) return alert("Nhập nội dung góp ý!");
+            alert("Gửi góp ý thành công!");
+            document.getElementById("feedbackContent").value = "";
+        }
+
+        // TẢI HỘP THƯ
+        function loadInbox(uid) {
+            onValue(ref(db, `users/${uid}/inbox`), (snap) => {
+                const list = document.getElementById("inboxList");
+                list.innerHTML = "";
+                if(!snap.exists()) { list.innerHTML = `<p style="color: #94a3b8; text-align:center;">Hộp thư trống.</p>`; return; }
+                snap.forEach((child) => {
+                    let msg = child.val();
+                    list.innerHTML += `<div class="msg-box"><h4 style="margin:0 0 5px 0; color:#38bdf8;">${msg.title}</h4><p style="margin:0;">${msg.message}</p><small style="color:#64748b;">${msg.time || ''}</small></div>`;
+                });
+            });
+        }
+
+        // TẢI LỊCH SỬ
+        function loadHistory(uid) {
+            onValue(ref(db, `users/${uid}/history`), (snap) => {
+                const list = document.getElementById("historyList");
+                list.innerHTML = "";
+                if(!snap.exists()) { list.innerHTML = `<p style="color: #94a3b8; text-align:center;">Chưa có giao dịch.</p>`; return; }
+                snap.forEach((child) => {
+                    let h = child.val();
+                    list.innerHTML += `<div class="history-item"><b>${h.type}</b>: ${h.amount.toLocaleString()} VNĐ<br><span style="color:#f59e0b;">Trạng thái: ${h.status}</span><br><small style="color:#64748b;">${h.time}</small></div>`;
+                });
+            });
+        }
+
+        // MODAL XÁC NHẬN 3 GIÂY
+        window.openConfirmModal = function(text, callback) {
+            const modal = document.getElementById("confirmModal");
+            const btn = document.getElementById("btnConfirmAction");
+            document.getElementById("confirmText").innerText = text;
+            modal.classList.remove("hidden");
+            btn.disabled = true;
+            actionCallback = callback;
+            
+            let count = 3;
+            btn.innerText = `Xác nhận (${count}s)`;
+            const timer = setInterval(() => {
+                count--;
+                btn.innerText = `Xác nhận (${count}s)`;
+                if(count === 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.innerText = "Xác Nhận Ngay!";
+                }
+            }, 1000);
+        }
+
+        window.closeConfirmModal = function() {
+            document.getElementById("confirmModal").classList.add("hidden");
+            actionCallback = null;
+        }
+
+        document.getElementById("btnConfirmAction").addEventListener("click", () => {
+            if(actionCallback) actionCallback();
+            closeConfirmModal();
+        });
+
+        // ADMIN CHỨC NĂNG
+        window.adminExecute = async function(actionType) {
+            if(!currentUserData || currentUserData.role !== "Admin") return alert("Không có quyền!");
+
+            let confirmMsg = "";
+            let executeLogic = null;
+
+            if (actionType === 'globalMsg') {
+                const title = document.getElementById("adminGlobalTitle").value;
+                const message = document.getElementById("adminGlobalMsg").value;
+                if(!title || !message) return alert("Điền đủ tiêu đề và nội dung!");
+                confirmMsg = "Gửi thông báo toàn cầu?";
+                executeLogic = async () => {
+                    const snap = await get(ref(db, 'users'));
+                    snap.forEach(u => push(ref(db, `users/${u.key}/inbox`), { title, message, time: new Date().toLocaleString() }));
+                    alert("Đã gửi thành công!");
+                };
+            }
+            else if (actionType === 'addMoney') {
+                const uid = document.getElementById("adminTargetUid").value;
+                const amt = parseInt(document.getElementById("adminMoneyAmount").value);
+                if(!uid || isNaN(amt)) return alert("Nhập UID và số tiền!");
+                confirmMsg = `Cập nhật ${amt} VNĐ cho UID ${uid}?`;
+                executeLogic = async () => {
+                    const r = ref(db, 'users/' + uid);
+                    const s = await get(r);
+                    if(s.exists()) {
+                        let bal = (s.val().balance || 0) + amt;
+                        await update(r, { balance: bal });
+                        alert("Thành công!");
+                    } else alert("Không tìm thấy user!");
+                };
+            }
+            else if (actionType === 'enableMaint') {
+                confirmMsg = "Bật chế độ bảo trì?";
+                executeLogic = () => update(ref(db, 'systemConfig'), { maintenance: true });
+            }
+            else if (actionType === 'disableMaint') {
+                confirmMsg = "Tắt chế độ bảo trì?";
+                executeLogic = () => update(ref(db, 'systemConfig'), { maintenance: false });
+            }
+            else if (actionType === 'checkUser') {
+                const uid = prompt("Nhập UID cần kiểm tra:");
+                if(!uid) return;
+                get(ref(db, 'users/' + uid)).then(s => {
+                    if(s.exists()) alert(JSON.stringify(s.val(), null, 2));
+                    else alert("Không thấy!");
+                });
+                return;
+            }
+            else if (actionType === 'showStats') {
+                const adminInc = (await get(ref(db, 'systemConfig/adminTotalIncome'))).val() || 0;
+                const fund = (await get(ref(db, 'systemConfig/accumulatedFund'))).val() || 0;
+                
+                get(ref(db, 'users')).then(s => {
+                    let totalUsers = 0, totalBal = 0;
+                    s.forEach(u => { totalUsers++; totalBal += (u.val().balance || 0); });
+                    alert(`📊 THỐNG KÊ HỆ THỐNG:\n- Tổng tài khoản: ${totalUsers}\n- Tổng số dư ví user: ${totalBal.toLocaleString()} VNĐ\n- Thu nhập của Admin (30%): ${adminInc.toLocaleString()} VNĐ\n- Quỹ tích lũy (10%): ${fund.toLocaleString()} VNĐ`);
+                });
+                return;
+            }
+
+            if(confirmMsg) openConfirmModal(confirmMsg, executeLogic);
+        }
+    </script>
+</body>
+</html>
